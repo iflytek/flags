@@ -15,8 +15,11 @@ I think everybody will reply yes.
 
 Python provide us some useful libs such as argparse...
 
+## GetStarted
 
-## Design
+TODO
+
+## Design （In progress）
 
 Based on the argparse, we want to standardize scripts Input/Output Parameters format, such as env paramiters format, file location parameters format, logging format, logging level format ,workspace location,
 
@@ -44,6 +47,13 @@ you can pass parameters by this way:
 or you can specify every parameters in another way:
 
 `python yourprogram.py --in epoch=0 --in batch_size=10 --out model_path=/workspace`
+
+
+### workspace location
+
+workspace is the place where the scripts is running.  default is `os.getcwd()`  ussually means the place that the script's location  or the scrpit's executor's location
+
+
 
 
 
