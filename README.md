@@ -9,5 +9,10 @@ Now days, python is the most popular script language . In your company , Do you 
 
 I think everybody will reply yes.
 
-Python provide us some useful lib such as argparse...
+Python provide us some useful libs such as argparse...
+
+
+## design
+
+Based on the argparse, we want to standardize scripts Input/Output Parameters format.
 
