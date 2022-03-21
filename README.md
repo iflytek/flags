@@ -32,6 +32,7 @@ so my design for the input/output is :
 ```python
 flags.in("epoch", int, 0 , "description" ,true)
 flags.in("batch_size", int, 6, "description",true)
+flags.in("lr", float, 0.01, "description",false)
 flags.out("model_path", str, "/workspace/model" ,"model path",true)
 ```
 when run the program:
