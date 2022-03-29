@@ -142,7 +142,59 @@ $ cat ret
 10001
 ```
 
+### flags错误码装饰器设计&如何使用
 
+定义了exitWithCode装饰器
+
+```python
+
+class GenericException(Exception):
+    def __init__(self, message, retcode):
+        super().__init__(message, retcode)
+        self.message = message
+        self.retcode = retcode
+
+# 定义 错误退出错误码装饰器
+def exitWithCode(fn):
+    def wrapper(self, *args):
+        try:
+            fn(self, *args)
+        except GenericException as e:
+            err_info = str(traceback.format_exc())
+            print(err_info)
+            with open("./ret","w") as r:
+                r.write(str(e.retcode)+"\n")
+                r.close()
+
+            # 执行错误执行退出码统一-1
+            sys.exit(-1)
+    return wrapper
+```
+
+其中flags定义了一个自定义错误类 GenericException，这段装饰器代码主要用于在你觉得可能出异常的函数上装饰下，当函数中抛出你的自定义异常，则该装饰器就会打印堆栈，并且退出程序，并且保存错误码到ret文件
+
+flags库自身就有实际案例使用:
+
+```python
+    @exitWithCode
+    def add_tool(self, tool: BinTool):
+        # 添加tool到全局 tools实例中去
+        if tool.name in self.tools:
+            logger.info("the tool %s has already been registered" % tool.name)
+        else:
+            if self.checkTool(tool):
+                self.tools[tool.name] = tool
+                print("# The tool: {name} located at {location} for {usage} has been registered!!!".format(
+                    name=tool.name, location=tool.location, usage=tool.usage))
+            else:
+                print("## The tool: {name}  has not been registered!!!".format(
+                    name=tool.name))
+                logger.error("shutdowning!!")
+                raise GenericException("shutdowning", StatusCodeEnum.ERROR.value[0])
+```
+
+如这一段: 注册tool工具时，如果检查该工具不存在， 则抛出异常信息， exitWithCode自动捕获该异常并退出用户指定的错误码，错误码为整型即可。
+实际效果如上节所述。
 
 
 
