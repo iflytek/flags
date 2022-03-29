@@ -24,7 +24,7 @@ TODO
 Based on the argparse, we want to standardize scripts Input/Output Parameters format, such as env paramiters format, file location parameters format, logging format, logging level format ,workspace location,
 
 
-### Input/Output Paramters Format
+### Input/Output Paramters Format 【depreciated 废弃 忽略此处设计】
  
 what the difference between the  input/output paramters? Generally , all the paramters is the input parameters, how to distinguish them? 
 
