@@ -26,6 +26,18 @@ TODO
 
 Based on the argparse, we want to standardize scripts Input/Output Parameters format, such as env paramiters format, file location parameters format, logging format, logging level format ,workspace location,
 
+flags主要基于argparse 等标准库。为二次封装的一个简易库，使用时导入即可。
+
+主要为解决我们在ai领域中，常见场景如 数据准备，数据处理，训练，推理，仿真等阶段的各种场景脚本编写，对于不同python程度的研究员开发者，
+
+通过flags库来约束 基本的输入输出，工具调用，日志展示，错误码输出等，将为AI更好地工程化提前铺平道路。
+
+flags让研究员开发者更加专注脚本核心逻辑，以及算法研发，对于周边的这些库规范，只要使用flags相当于大家遵守同一个脚本输入输出规范原则。
+
+当前flags中功能还比较少，欢迎更多AI领域人士参与共建!  欢迎在本github [讨论区](https://github.com/xfyun/flags/discussions/new)发起讨论。
+
+
+
 
 ### 通过flags 快速度定义Input/Output Paramters 
  
