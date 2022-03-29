@@ -30,6 +30,8 @@ import sys
 import argparse
 import logging
 import subprocess
+import traceback
+from enum import Enum
 
 logger = None
 parsed_args = None
@@ -138,6 +140,38 @@ def back_origin_workspace(fn):
     return inner
 
 
+#
+class StatusCodeEnum(Enum):
+    """状态码枚举类"""
+    OK = (0, '成功')
+    ERROR = (10001, '错误')
+    SERVER_ERR = (500, '服务器异常')
+
+
+class GenericException(Exception):
+    def __init__(self, message, retcode):
+        super().__init__(message, retcode)
+        self.message = message
+        self.retcode = retcode
+
+
+# 定义 错误退出错误码装饰器
+def exitWithCode(fn):
+    def wrapper(self, *args):
+        try:
+            fn(self, *args)
+        except GenericException as e:
+            err_info = str(traceback.format_exc())
+            print(err_info)
+            with open("./ret","w") as r:
+                r.write(str(e.retcode)+"\n")
+                r.close()
+
+            # 执行错误执行退出码统一-1
+            sys.exit(-1)
+    return wrapper
+
+
 class BinTool(object):
     ## 专门执行二进制工具处理的类
     def __init__(self, name, location, usage, workspace=None, env_path=None, logs_dir=None):
@@ -173,6 +207,7 @@ class Tools(object):
     def __init__(self):
         self.tools = {}
 
+    @exitWithCode
     def add_tool(self, tool: BinTool):
         # 添加tool到全局 tools实例中去
         if tool.name in self.tools:
@@ -186,16 +221,15 @@ class Tools(object):
                 print("## The tool: {name}  has not been registered!!!".format(
                     name=tool.name))
                 logger.error("shutdowning!!")
-                sys.exit(-1)
+                raise GenericException("shutdowning", StatusCodeEnum.ERROR.value[0])
 
-    def checkTool(self,tool):
+    def checkTool(self, tool):
         if not os.path.isfile(tool.location):
             logger.error("the tool %s has not been found!" % tool.name)
             return False
         # todo 检验执行权限
 
         return True
-
 
     def get_tool(self, name):
         # name必须英文
@@ -209,7 +243,7 @@ flags_instance = Flags()
 flags_tools = Tools()
 
 
-def registerArgs(inputs: list[Args], outputs: list[Args]):
+def registerArgs(inputs, outputs):
     for input in inputs:
         flags_instance.register(Args(*input), [])
     for output in outputs:

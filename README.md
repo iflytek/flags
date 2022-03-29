@@ -1,6 +1,8 @@
 # flags
 A Useful Python lib that can make your scripts more standard and easier to maintain...
 
+[简体中文](README_CN.md)
+
 ## Feature
 
 * All in one script, copy anywhere
