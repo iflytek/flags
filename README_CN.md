@@ -1,7 +1,7 @@
 # flags (v0.1)
 一个简易的帮助用户更好的规范化脚本输入输出,工具串接,日志输出等
 
-[english](README.md)
+[english](README_EN.md)
 
 ## 特性
 
@@ -10,17 +10,19 @@
 * 简单易用
 * 主要围绕AI领域的一些训练脚本
 
-## Background
+## 背景
 
-Now days, python is the most popular script language . In your company , Do you have seen various scripts that have not a standard format?
+现如今， python已经成为最流行的胶水语言脚本。AI领域更是如此。
 
-I think everybody will reply yes.
+在你的公司，你是否遇到过一些难以启齿、维护的py脚本？
 
-Python provide us some useful libs such as argparse...
+相信你的回答一定是 yes.
 
-## GetStarted
+Python 提供给我们很多标准库，但是我们没有很好的运用他，所以flags更进一步，帮助用户进一步不需要关注一些冗余配置，让研究员更好的研究算法，产出高效稳定的脚本...
 
-TODO
+## 开始
+
+
 
 ## 设计
 
@@ -39,8 +41,8 @@ flags让研究员开发者更加专注脚本核心逻辑，以及算法研发，
 
 
 
-### 通过flags 快速度定义Input/Output Paramters 
- 
+### 通过flags 快速度定义Input/Output Paramters
+
 定义格式为主要是2个数组 ，每个数组的1个元素为一个6元素元组
 分别对应: (name, type, default, choices, desc, required)
 其中 choices为可选值， desc为描述该参数意义， required代表该参数是否可选
@@ -96,7 +98,7 @@ Tue, 29 Mar 2022 14:31:04 flags.py[line:45] INFO ('/Users/yangyanbo/projects/ifl
 Tue, 29 Mar 2022 14:31:04 flags.py[line:45] INFO ('Executing Shell Cmd: /bin/ls .',)
 LICENSE
 README.md
-README_CN.md
+README_EN.md
 __pycache__
 demo_args.py
 demo_tools.py
