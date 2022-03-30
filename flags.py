@@ -29,44 +29,47 @@ import os
 import sys
 import argparse
 import logging
+import logging.handlers
 import subprocess
 import traceback
 from enum import Enum
 
-logger = None
+logger = logging.getLogger('logger')
+
 parsed_args = None
 
 
-class Logger(object):
-    log_level = "INFO"
-
-    @staticmethod
-    def info(*args):
-        return logging.info(args)
-
-    @staticmethod
-    def debug(*args):
-        return logging.debug(args)
-
-    @staticmethod
-    def error(*args):
-        return logging.error(args)
-
-
-def get_logger():
+def setup_logger():
+    # based on https://docs.python.org/3/howto/logging-cookbook.html#multiple-handlers-and-formatters
     # Todo support more logging method here
     global logger
+    fmt = logging.Formatter(
+        "%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s", datefmt="%a, %d %b %Y %H:%M:%S")
+    stdout_hd = logging.StreamHandler(sys.stdout)
+    stdout_hd.setFormatter(fmt)
+    logger.addHandler(stdout_hd)
 
-    if logger == None:
-        logger = Logger
-        logging.basicConfig(level=logger.log_level,
-                            format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-                            datefmt='%a, %d %b %Y %H:%M:%S',
-                            stream=sys.stdout)
-        Logger.debug("logger inited...")
+    stdout_err = logging.StreamHandler(sys.stderr)
+    stdout_err.setFormatter(fmt)
+    logger.addHandler(stdout_err)
+
+    logger.setLevel(logging.INFO)
 
 
-get_logger()
+def setLogLevel(level):
+    if level == "DEBUG":
+        logger.setLevel(logging.DEBUG)
+    elif level == "INFO":
+        logger.setLevel(logging.INFO)
+    elif level == "ERROR":
+        logger.setLevel(logging.ERROR)
+    elif level == "WARN":
+        logger.setLevel(logging.WARN)
+    else:
+        logger.setLevel(logging.INFO)
+
+
+setup_logger()
 
 
 # 定义参数基类
@@ -82,7 +85,7 @@ class Args(object):
 
     def __init__(self, *args):
         self.name, self.typ, self.default, self.choices, self.desc, self.required = args
-        logger.debug("Args Input: ", self.name)
+        logger.debug("Args Input: %s" % self.name)
 
 
 class HPArgs(object):
@@ -132,19 +135,29 @@ def back_origin_workspace(fn):
         if path:
             logger.info("entering: %s" % path)
             os.chdir(path)
-        fn(self, *args)
+        ret = fn(self, *args)
         if path:
             logger.info("backing: %s" % cwd)
             os.chdir(cwd)
+        return ret
 
     return inner
 
 
 #
 class StatusCodeEnum(Enum):
-    """状态码枚举类"""
+
+    def __str__(self):
+        return str(self.value[0])
+
+    def __int__(self):
+        return self.value[0]
+
+
+class FlagsErrorCodeEnum(StatusCodeEnum):
+    """引用本库状态码枚举类"""
     OK = (0, '成功')
-    ERROR = (10001, '错误')
+    ERROR = (-1, '错误')
     SERVER_ERR = (500, '服务器异常')
 
 
@@ -152,23 +165,37 @@ class GenericException(Exception):
     def __init__(self, message, retcode):
         super().__init__(message, retcode)
         self.message = message
-        self.retcode = retcode
+        if isinstance(retcode, StatusCodeEnum):
+            self.retcode = retcode.value[0]
+        else:
+            self.retcode = retcode
 
 
 # 定义 错误退出错误码装饰器
 def exitWithCode(fn):
     def wrapper(self, *args):
         try:
-            fn(self, *args)
+            ret = fn(self, *args)
+            return ret
         except GenericException as e:
             err_info = str(traceback.format_exc())
             print(err_info)
-            with open("./ret","w") as r:
-                r.write(str(e.retcode)+"\n")
+            with open("./ret", "w") as r:
+                r.write(str(e.retcode) + "\n")
                 r.close()
 
             # 执行错误执行退出码统一-1
             sys.exit(-1)
+        except Exception as e:
+            # 此异常未用户未预见异常
+            err_info = str(traceback.format_exc())
+            print(err_info)
+            with open("./ret", "w") as r:
+                r.write(str(FlagsErrorCodeEnum.ERROR) + "\n")
+                r.close()
+            # 执行错误执行退出码统一-1
+            sys.exit(-1)
+
     return wrapper
 
 
@@ -197,6 +224,7 @@ class BinTool(object):
 
         if ret != 0:
             logger.error("cmd: %s execute Error!" % cmd)
+        return ret
 
     # 多进程执行
     def execute_mp(self, *args):
@@ -221,7 +249,7 @@ class Tools(object):
                 print("## The tool: {name}  has not been registered!!!".format(
                     name=tool.name))
                 logger.error("shutdowning!!")
-                raise GenericException("shutdowning", StatusCodeEnum.ERROR.value[0])
+                raise GenericException("shutdowning", FlagsErrorCodeEnum.ERROR)
 
     def checkTool(self, tool):
         if not os.path.isfile(tool.location):
@@ -274,6 +302,6 @@ def executeTool(name, toolArgs):
     tool = flags_tools.get_tool(name)
     if not tool:
         logger.error("No this tool")
-        return
+        return -1
     cmd = "{tool} {args}".format(tool=tool.location, args=toolArgs)
-    tool.execute_once(cmd)
+    return tool.execute_once(cmd)

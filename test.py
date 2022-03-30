@@ -42,9 +42,10 @@ IN = [
 OUT = [
     ("dest_path", str, "", [], "", True),
 ]
+flags.setLogLevel("DEBUG")
 
 flags.registerArgs(IN, OUT)
-flags.registerTool(name="ls", usage='listfiles ', logs_dir=None, location="/bin/ls")
+flags.registerTool(name="ls", usage='listfiles ', logs_dir=None, location="/bin/lss")
 
 flags.executeTool("ls",".")
 flags.parse()
