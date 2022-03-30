@@ -51,7 +51,7 @@ def setup_logger():
 
     stdout_err = logging.StreamHandler(sys.stderr)
     stdout_err.setFormatter(fmt)
-    logger.addHandler(stdout_err)
+    # logger.addHandler(stdout_err)
 
     logger.setLevel(logging.INFO)
 
@@ -153,6 +153,14 @@ class StatusCodeEnum(Enum):
     def __int__(self):
         return self.value[0]
 
+    @property
+    def message(self):
+        return self.value[1]
+
+    @property
+    def code(self):
+        return self.value[0]
+
 
 class FlagsErrorCodeEnum(StatusCodeEnum):
     """引用本库状态码枚举类"""
@@ -201,7 +209,8 @@ def exitWithCode(fn):
 
 class BinTool(object):
     ## 专门执行二进制工具处理的类
-    def __init__(self, name, location, usage, workspace=None, env_path=None, logs_dir=None):
+    def __init__(self, name, location, usage, workspace=None, env_path=None, logs_dir=None, ld_library_path=None,
+                 env_dict={}):
         # todo 校验 name必须英文
         self.name = name
         self.location = location
@@ -211,13 +220,29 @@ class BinTool(object):
         self.logs_dir = logs_dir
         # todo 校验location 存在性并提示
 
+        # init ld
+        if ld_library_path:
+            self.initLD(ld_library_path)
+
+        if env_dict:
+            for k, v in env_dict.items():
+                logger.info("registering env: %s " % k)
+            os.putenv(k, v)
+
         self.workspace = workspace
         pass
+
+    def initLD(self, ldpath):
+        os.putenv("LD_LIBRARY_PATH", "$LD_LIBRARY_PATH:%s" % ldpath)
+        logger.info("registed LD_LIBRARY_PATH: %s " % ldpath)
 
     # 单次执行
     @back_origin_workspace
     def execute_once(self, cmd):
         logger.info(os.getcwd())
+        if os.path.isdir(self.workspace):
+            os.chdir(self.workspace)
+
         logger.info("Executing Shell Cmd: %s" % cmd)
         ret = subprocess.call(cmd, shell=True)
         logger.info("Cmd: %s, return: %s" % (cmd, str(ret)))
@@ -234,6 +259,11 @@ class BinTool(object):
 class Tools(object):
     def __init__(self):
         self.tools = {}
+        self.init_python()
+
+    def init_python(self):
+        py = BinTool("python", sys.executable, "executing")
+        self.add_tool(py)
 
     @exitWithCode
     def add_tool(self, tool: BinTool):
@@ -252,7 +282,15 @@ class Tools(object):
                 raise GenericException("shutdowning", FlagsErrorCodeEnum.ERROR)
 
     def checkTool(self, tool):
-        if not os.path.isfile(tool.location):
+        binpath = tool.location
+        # 如果tool存在特定的工作空间, 则校验该工作空间和location join的存在必要性
+        # todo 这里存疑 当前只能代表必须使用 ./xxx 执行的case
+        # 最好都指定绝对路径
+        # 然而有些c工具 只能在当前工具下 ./ 执行就比较头疼
+
+        if tool.workspace and os.path.isdir(tool.workspace):
+            binpath = os.path.join(tool.workspace, tool.location)
+        if not os.path.isfile(binpath):
             logger.error("the tool %s has not been found!" % tool.name)
             return False
         # todo 检验执行权限
@@ -285,8 +323,10 @@ def parse():
     return parsed_args
 
 
-def registerTool(name, location, usage, workspace=None, env_path=None, logs_dir=None):
-    btool = BinTool(name, location, usage, workspace=workspace, env_path=env_path, logs_dir=logs_dir)
+def registerTool(name, location, usage, workspace=None, env_path=None, env_dict={}, ld_library_path=None,
+                 logs_dir=None):
+    btool = BinTool(name, location, usage, workspace=workspace, env_path=env_path, logs_dir=logs_dir,
+                    ld_library_path=ld_library_path, env_dict=env_dict)
     flags_tools.add_tool(btool)
 
 
@@ -304,4 +344,34 @@ def executeTool(name, toolArgs):
         logger.error("No this tool")
         return -1
     cmd = "{tool} {args}".format(tool=tool.location, args=toolArgs)
+    return tool.execute_once(cmd)
+
+
+def getToolLocationDir(name):
+    tool = flags_tools.get_tool(name)
+    if not tool:
+        logger.error("No this tool")
+        return ""
+    return os.path.dirname(tool.location)
+
+
+def getWorkspaceDir(name):
+    tool = flags_tools.get_tool(name)
+    if not tool:
+        logger.error("No this tool")
+        return ""
+    if tool.workspace == None:
+        return os.getcwd()
+    else:
+        if os.path.isdir(tool.workspace):
+            return os.path.abspath(tool.workspace)
+    return tool.workspace
+
+
+def executePython(pyscriptCMD):
+    tool = flags_tools.get_tool("python")
+    if not tool:
+        logger.error("No this tool")
+        return -1
+    cmd = "{tool} {args}".format(tool=tool.location, args=pyscriptCMD)
     return tool.execute_once(cmd)
