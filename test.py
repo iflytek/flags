@@ -38,6 +38,7 @@ IN = [
     ("source_path", str, "", [], "", True),
     ("male", int, 0, [], "男性", True),
     ("female", int, 0, [], "女性", True),
+    ("use_test", True, False, [], "use..", True),
 ]
 OUT = [
     ("dest_path", str, "", [], "", True),
@@ -45,7 +46,8 @@ OUT = [
 flags.setLogLevel("DEBUG")
 
 flags.registerArgs(IN, OUT)
-flags.registerTool(name="ls", usage='listfiles ', logs_dir=None, location="/bin/lss")
+flags.registerTool(name="ls", usage='listfiles ', logs_dir=None, location="/bin/ls")
 
 flags.executeTool("ls",".")
-flags.parse()
+args = flags.parse()
+print(args.use_test)

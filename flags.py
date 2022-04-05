@@ -120,11 +120,36 @@ class Flags(object):
 
     def initflags(self):
         for ia in self.input_args:
-            self.args.add_argument("--" + ia.name, type=ia.typ, default=ia.default, required=ia.required,
-                                   choices=ia.choices if ia.choices else None, help=ia.desc)
+            # trick here 如果第三个参数是 bool值 并且，第二个参数不为类型， 为True or False，则True代表 store_true False 代表store_false
+            if isinstance(ia.default, bool):
+                if isinstance(ia.typ, type):
+                    self.args.add_argument("--" + ia.name, type=ia.typ, default=ia.default, required=ia.required,
+                                           choices=ia.choices if ia.choices else None, help=ia.desc)
+                elif isinstance(ia.typ, bool) and ia.typ == True:
+                    action = "store_true"
+                    self.args.add_argument("--" + ia.name, action=action, default=ia.default, required=ia.required,
+                                           help=ia.desc)
+                elif isinstance(ia.typ, bool) and ia.typ == False:
+                    action = "store_false"
+                    self.args.add_argument("--" + ia.name, action=action, default=ia.default, required=ia.required,
+                                           help=ia.desc)
+                else:
+                    logger.error("no support this second element..")
         for oa in self.output_args:
-            self.args.add_argument("--" + oa.name, type=oa.typ, default=oa.default, required=oa.required,
-                                   choices=oa.choices if oa.choices else None, help=oa.desc)
+            if isinstance(oa.default, bool):
+                if isinstance(oa.typ, type):
+                    self.args.add_argument("--" + oa.name, type=oa.typ, default=oa.default, required=oa.required,
+                                           choices=oa.choices if oa.choices else None, help=oa.desc)
+                elif isinstance(oa.typ, bool) and oa.typ == True:
+                    action = "store_true"
+                    self.args.add_argument("--" + oa.name, action=action, default=oa.default, required=oa.required,
+                                           help=oa.desc)
+                elif isinstance(oa.typ, bool) and oa.typ == False:
+                    action = "store_false"
+                    self.args.add_argument("--" + oa.name, action=action, default=oa.default, required=oa.required,
+                                           help=oa.desc)
+                else:
+                    logger.error("no support this second element..")
 
 
 # 定义 返回工作空间装饰器
@@ -191,7 +216,6 @@ def exitWithCode(fn):
             with open("./ret", "w") as r:
                 r.write(str(e.retcode) + "\n")
                 r.close()
-
             # 执行错误执行退出码统一-1
             sys.exit(-1)
         except Exception as e:
@@ -240,7 +264,7 @@ class BinTool(object):
     @back_origin_workspace
     def execute_once(self, cmd):
         logger.info(os.getcwd())
-        if os.path.isdir(self.workspace):
+        if self.workspace != None and os.path.isdir(self.workspace):
             os.chdir(self.workspace)
 
         logger.info("Executing Shell Cmd: %s" % cmd)
