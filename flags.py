@@ -135,6 +135,9 @@ class Flags(object):
                                            help=ia.desc)
                 else:
                     logger.error("no support this second element..")
+            else:
+                self.args.add_argument("--" + ia.name, type=ia.typ, default=ia.default, required=ia.required,
+                                       choices=ia.choices if ia.choices else None, help=ia.desc)
         for oa in self.output_args:
             if isinstance(oa.default, bool):
                 if isinstance(oa.typ, type):
@@ -150,6 +153,9 @@ class Flags(object):
                                            help=oa.desc)
                 else:
                     logger.error("no support this second element..")
+            else:
+                self.args.add_argument("--" + oa.name, type=oa.typ, default=oa.default, required=oa.required,
+                                       choices=oa.choices if oa.choices else None, help=oa.desc)
 
 
 # 定义 返回工作空间装饰器
