@@ -22,7 +22,13 @@ Python 提供给我们很多标准库，但是我们没有很好的运用他，�
 
 ## 开始
 
+pypi: https://pypi.org/project/iflags/
 
+```bash
+pip install iflags
+python
+>>>import flags
+```
 
 ## 设计
 
