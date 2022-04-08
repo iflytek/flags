@@ -1,4 +1,4 @@
-# flags (v0.1)
+# flags (v1.0.0)
 一个简易的帮助用户更好的规范化脚本输入输出,工具串接,日志输出等
 
 [english](README_EN.md)

@@ -1,4 +1,4 @@
-# flags (v0.1)
+# flags (v1.0.0)
 一个简易的帮助用户更好的规范化脚本输入输出,工具串接,日志输出等
 
 [english](README_EN.md)
@@ -22,12 +22,13 @@ Python 提供给我们很多标准库，但是我们没有很好的运用他，�
 
 ## 开始
 
-* 如何安装
+pypi: https://pypi.org/project/iflags/
 
-初期暂时只需要复制flags.py[没错就1个文件!] 到你本地脚本目录即可应用，暂时只支持py3
-
-* 未来支持pypi分发，pip直接安装
-
+```bash
+pip install iflags
+python
+>>>import flags
+```
 
 ## 设计
 
@@ -184,20 +185,20 @@ flags库自身就有实际案例使用:
 
 ```python
     @exitWithCode
-    def add_tool(self, tool: BinTool):
-        # 添加tool到全局 tools实例中去
-        if tool.name in self.tools:
-            logger.info("the tool %s has already been registered" % tool.name)
+def add_tool(self, tool: BinTool):
+    # 添加tool到全局 tools实例中去
+    if tool.name in self.tools:
+        logger.info("the tool %s has already been registered" % tool.name)
+    else:
+        if self.checkTool(tool):
+            self.tools[tool.name] = tool
+            print("# The tool: {name} located at {location} for {usage} has been registered!!!".format(
+                name=tool.name, location=tool.location, usage=tool.usage))
         else:
-            if self.checkTool(tool):
-                self.tools[tool.name] = tool
-                print("# The tool: {name} located at {location} for {usage} has been registered!!!".format(
-                    name=tool.name, location=tool.location, usage=tool.usage))
-            else:
-                print("## The tool: {name}  has not been registered!!!".format(
-                    name=tool.name))
-                logger.error("shutdowning!!")
-                raise GenericException("shutdowning", StatusCodeEnum.ERROR.value[0])
+            print("## The tool: {name}  has not been registered!!!".format(
+                name=tool.name))
+            logger.error("shutdowning!!")
+            raise GenericException("shutdowning", StatusCodeEnum.ERROR.value[0])
 ```
 
 如这一段: 注册tool工具时，如果检查该工具不存在， 则抛出异常信息， exitWithCode自动捕获该异常并退出用户指定的错误码，错误码为整型即可。
