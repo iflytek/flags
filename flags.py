@@ -209,6 +209,16 @@ class GenericException(Exception):
         else:
             self.retcode = retcode
 
+# 定义logger
+
+def log_helper(fn):
+    def wrapper(self, *args):
+        logger.info("Start running %s" % fn.__name__)
+        ret = fn(self, *args)
+        logger.info("End: run  %s" % fn.__name__)
+        return ret
+
+    return wrapper
 
 # 定义 错误退出错误码装饰器
 def exitWithCode(fn):
