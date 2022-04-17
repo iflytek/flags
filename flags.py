@@ -38,6 +38,8 @@ logger = logging.getLogger('logger')
 
 parsed_args = None
 
+flags_ret_status_location = "/var/run"
+
 
 def setup_logger():
     # based on https://docs.python.org/3/howto/logging-cookbook.html#multiple-handlers-and-formatters
@@ -69,7 +71,17 @@ def setLogLevel(level):
         logger.setLevel(logging.INFO)
 
 
+def setup_ret_locate(path=flags_ret_status_location):
+    if not os.path.isdir(path):
+        os.makedirs(path, True)
+    else:
+        global flags_ret_status_location
+        flags_ret_status_location = path
+
+
 setup_logger()
+
+setup_ret_locate()
 
 
 # 定义参数基类
@@ -209,6 +221,7 @@ class GenericException(Exception):
         else:
             self.retcode = retcode
 
+
 # 定义logger
 
 def log_helper(fn):
@@ -220,25 +233,28 @@ def log_helper(fn):
 
     return wrapper
 
+
 # 定义 错误退出错误码装饰器
 def exitWithCode(fn):
     def wrapper(self, *args):
+        retfile = os.path.join(flags_ret_status_location, "ret")
         try:
             ret = fn(self, *args)
             return ret
         except GenericException as e:
             err_info = str(traceback.format_exc())
             print(err_info)
-            with open("./ret", "w") as r:
+            with open(retfile, "w") as r:
                 r.write(str(e.retcode) + "\n")
                 r.close()
+
             # 执行错误执行退出码统一-1
             sys.exit(-1)
         except Exception as e:
             # 此异常未用户未预见异常
             err_info = str(traceback.format_exc())
             print(err_info)
-            with open("./ret", "w") as r:
+            with open(retfile, "w") as r:
                 r.write(str(FlagsErrorCodeEnum.ERROR) + "\n")
                 r.close()
             # 执行错误执行退出码统一-1
